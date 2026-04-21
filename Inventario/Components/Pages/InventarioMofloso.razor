@@ -1,0 +1,239 @@
+﻿@page "/productos"
+@rendermode InteractiveServer
+
+<!-- titulo de la pagina -->
+<h3>registro de productos</h3>
+
+<!-- formulario de captura -->
+<div class="card mb-3">
+    <div class="card-header">
+        <strong>capturar producto</strong>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">no. de inventario</label>
+                <input type="number" class="form-control" @bind="numeroInventario" @bind:event="oninput" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">descripcion</label>
+                <input type="text" class="form-control" placeholder="escribe la descripcion del producto" @bind="descripcion" @bind:event="oninput" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">departamento</label>
+                <select class="form-select" @bind="departamentoSeleccionado">
+                    <option value="frutas">frutas</option>
+                    <option value="verduras">verduras</option>
+                    <option value="lacteos">lacteos</option>
+                    <option value="limpieza">limpieza</option>
+                    <option value="carnes">carnes</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button class="btn btn-primary w-100" @onclick="guardarDatos">guardar datos</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- botones de listado -->
+<div class="row mb-3">
+    <div class="col">
+        <button class="btn btn-secondary me-2" @onclick="mostrarListaCompleta">lista completa</button>
+        <button class="btn btn-success me-2" @onclick="mostrarListaFrutas">lista de frutas</button>
+        <button class="btn btn-success me-2" @onclick="mostrarListaVerduras">lista de verduras</button>
+        <button class="btn btn-success me-2" @onclick="mostrarListaLacteos">lista de lacteos</button>
+        <button class="btn btn-success me-2" @onclick="mostrarListaLimpieza">lista de limpieza</button>
+        <button class="btn btn-success me-2" @onclick="mostrarListaCarnes">lista de carnes</button>
+        <button class="btn btn-danger" @onclick="cerrarLista">cerrar lista</button>
+    </div>
+</div>
+
+<!-- tabla de productos (se muestra solo si hay productos en la lista actual) -->
+@if (productosMostrar.Count > 0)
+{
+    <div class="card">
+        <div class="card-header">
+            <strong>listado de productos</strong>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>no. inventario</th>
+                        <th>descripcion</th>
+                        <th>departamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var producto in productosMostrar)
+                    {
+                        <tr>
+                            <td>@producto.NumeroInventario</td>
+                            <td>@producto.Descripcion</td>
+                            <td>@producto.Departamento</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- mensaje de alerta para mostrar errores o confirmaciones -->
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+        @mensaje
+        <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+    </div>
+}
+
+@code {
+    // clase interna para representar un producto
+    public class Producto
+    {
+        public int NumeroInventario { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
+        public string Departamento { get; set; } = string.Empty;
+    }
+
+    // lista principal que almacena todos los productos en memoria
+    private List<Producto> listaProductos = new List<Producto>();
+
+    // lista que se muestra actualmente en la tabla (puede ser filtrada)
+    private List<Producto> productosMostrar = new List<Producto>();
+
+    // variables para el formulario
+    private int numeroInventario = 0;
+    private string descripcion = string.Empty;
+    private string departamentoSeleccionado = "frutas";
+
+    // mensaje para el usuario
+    private string mensaje = string.Empty;
+
+    // metodo para guardar un nuevo producto
+    private void guardarDatos()
+    {
+        // validar que la descripcion no este vacia
+        if (string.IsNullOrWhiteSpace(descripcion))
+        {
+            mensaje = "error: la descripcion no puede estar vacia";
+            return;
+        }
+
+        // validar que el numero de inventario sea mayor que cero
+        if (numeroInventario <= 0)
+        {
+            mensaje = "error: el numero de inventario debe ser mayor a cero";
+            return;
+        }
+
+        // verificar que el numero de inventario no se repita
+        bool existe = listaProductos.Any(p => p.NumeroInventario == numeroInventario);
+
+        if (existe)
+        {
+            mensaje = $"error: el numero de inventario {numeroInventario} ya existe. no se puede duplicar.";
+            return;
+        }
+
+        // crear nuevo producto
+        Producto nuevoProducto = new Producto
+        {
+            NumeroInventario = numeroInventario,
+            Descripcion = descripcion.Trim(),
+            Departamento = departamentoSeleccionado
+        };
+
+        // agregar a la lista principal
+        listaProductos.Add(nuevoProducto);
+
+        // mostrar mensaje de exito
+        mensaje = $"producto '{descripcion}' guardado correctamente";
+
+        // limpiar campos del formulario
+        numeroInventario = 0;
+        descripcion = string.Empty;
+        departamentoSeleccionado = "frutas";
+
+        // mantener la lista actual visible (si estaba mostrando algo)
+        if (productosMostrar.Count > 0)
+        {
+            // si ya habia una lista visible, actualizamos con la misma vista
+            if (productosMostrar == listaProductos)
+            {
+                mostrarListaCompleta();
+            }
+            else if (productosMostrar.All(p => p.Departamento == "frutas"))
+            {
+                mostrarListaFrutas();
+            }
+            else if (productosMostrar.All(p => p.Departamento == "verduras"))
+            {
+                mostrarListaVerduras();
+            }
+            else if (productosMostrar.All(p => p.Departamento == "lacteos"))
+            {
+                mostrarListaLacteos();
+            }
+            else if (productosMostrar.All(p => p.Departamento == "limpieza"))
+            {
+                mostrarListaLimpieza();
+            }
+            else if (productosMostrar.All(p => p.Departamento == "carnes"))
+            {
+                mostrarListaCarnes();
+            }
+        }
+    }
+
+    // mostrar todos los productos
+    private void mostrarListaCompleta()
+    {
+        productosMostrar = new List<Producto>(listaProductos);
+        mensaje = string.Empty;
+    }
+
+    // mostrar solo productos del departamento frutas
+    private void mostrarListaFrutas()
+    {
+        productosMostrar = listaProductos.Where(p => p.Departamento == "frutas").ToList();
+        mensaje = string.Empty;
+    }
+
+    // mostrar solo productos del departamento verduras
+    private void mostrarListaVerduras()
+    {
+        productosMostrar = listaProductos.Where(p => p.Departamento == "verduras").ToList();
+        mensaje = string.Empty;
+    }
+
+    // mostrar solo productos del departamento lacteos
+    private void mostrarListaLacteos()
+    {
+        productosMostrar = listaProductos.Where(p => p.Departamento == "lacteos").ToList();
+        mensaje = string.Empty;
+    }
+
+    // mostrar solo productos del departamento limpieza
+    private void mostrarListaLimpieza()
+    {
+        productosMostrar = listaProductos.Where(p => p.Departamento == "limpieza").ToList();
+        mensaje = string.Empty;
+    }
+
+    // mostrar solo productos del departamento carnes
+    private void mostrarListaCarnes()
+    {
+        productosMostrar = listaProductos.Where(p => p.Departamento == "carnes").ToList();
+        mensaje = string.Empty;
+    }
+
+    // cerrar la lista (ocultar la tabla)
+    private void cerrarLista()
+    {
+        productosMostrar = new List<Producto>();
+        mensaje = string.Empty;
+    }
+}

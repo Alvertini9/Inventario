@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="C:\Users\Colibecas\OneDrive - Universidad de Colima\Documentos\Tarea J 4\ProgramacionWebVisual2026\InventarioMofloso.razor" Link="InventarioMofloso.razor" />
+  </ItemGroup>
+
+</Project>
